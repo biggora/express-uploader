@@ -67,7 +67,7 @@ app.all('/upload', function(req, res, next) {
 Options
 -----------------
 
-<table width="100%">
+<table style="width:100%">
     <thead>
         <tr>
             <th>
