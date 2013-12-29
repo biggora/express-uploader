@@ -1,22 +1,40 @@
 {
-"name": "express-uploader",
-        "description": "File uploads with NodeJS",
-        "version": "0.0.1",
-        "main": "./index.js",
-  "homepage": "https://github.com/biggora/express-uploader/",
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/biggora/express-uploader.git"
-  },
-  "author": "Aleksej Gordejev <aleksej@gordejev.lv> (https://github.com/biggora/)",
-  "keywords": [
-    "trinte",
-    "upload",
-    "express",
-    "middleware",
-    "connect"
-  ],
-        "licenses": {
-"type": "MIT"
-        }
+    "name": "express-uploader",
+    "description": "File uploads with NodeJS",
+    "version": "0.0.1",
+    "main": "./index.js",
+    "scripts": {
+        "test": "node tests/test.js"
+    },
+    "directories": {
+        "lib": "lib",
+        "media": "examples",
+        "tests": "tests"
+    },
+    "homepage": "https://github.com/biggora/express-uploader/",
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/biggora/express-uploader.git"
+    },
+    "author": "Aleksej Gordejev <aleksej@gordejev.lv> (https://github.com/biggora/)",
+    "keywords": [
+        "trinte",
+        "upload",
+        "express",
+        "middleware",
+        "connect"
+    ],
+    "licenses": {
+        "type": "MIT"
+    },
+    "engines": [
+        "node >= 0.8.0"
+    ],
+    "dependencies": {
+        "gm": ">=1.14.2",
+        "node-uuid": ">=1.4.1"
+    },
+    "devDependencies": {
+        "express": "3.x"
+    }
 }
