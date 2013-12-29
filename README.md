@@ -1,4 +1,4 @@
-## File upload middleware for NodeJS
+## File uploader
 
 Uploading files middleware for NodeJS, Express, TrinteJS, Connect.
 
