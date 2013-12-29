@@ -19,6 +19,7 @@ To install express-uploader:
 var Uploader = require('express-uploader');
 
 module.exports = function routes(map) {
+    ...
     map.all('/upload', function(req, res, next) {
         var uploader = new Uploader({
             debug: true,
@@ -62,6 +63,238 @@ app.all('/upload', function(req, res, next) {
 });
 
 ```
+
+Options
+-----------------
+
+<table width="100%">
+    <thead>
+        <tr>
+            <th>
+                Name
+            </th>
+            <th>
+                Type
+            </th>
+            <th>
+                Default
+            </th>
+            <th>
+                Description
+            </th>
+        </tr>
+    </thead>
+    <tr>
+        <td>
+            debug
+        </td>
+        <td>
+            boolean
+        </td>
+        <td>
+            false
+        </td>
+        <td>
+            
+        </td>
+    </tr>
+    <tr>
+        <td>
+            safeName
+        </td>
+        <td>
+            boolean
+        </td>
+        <td>
+            true
+        </td>
+        <td>
+            
+        </td>
+    </tr>
+    <tr>
+        <td>
+            validate
+        </td>
+        <td>
+            boolean
+        </td>
+        <td>
+            false
+        </td>
+        <td>
+            
+        </td>
+    </tr>
+    <tr>
+        <td>
+            thumbnails
+        </td>
+        <td>
+            boolean
+        </td>
+        <td>
+            false
+        </td>
+        <td>
+            
+        </td>
+    </tr>
+    <tr>
+        <td>
+            thumbToSubDir
+        </td>
+        <td>
+            boolean
+        </td>
+        <td>
+            false
+        </td>
+        <td>
+            
+        </td>
+    </tr>
+    <tr>
+        <td>
+            tmpDir
+        </td>
+        <td>
+            string
+        </td>
+        <td>
+            `/tmp`
+        </td>
+        <td>
+            
+        </td>
+    </tr>
+    <tr>
+        <td>
+            publicDir
+        </td>
+        <td>
+            string
+        </td>
+        <td>
+           `/public` 
+        </td>
+        <td>
+            
+        </td>
+    </tr>
+    <tr>
+        <td>
+            uploadDir
+        </td>
+        <td>
+            string
+        </td>
+        <td>
+            `/public/files`
+        </td>
+        <td>
+            
+        </td>
+    </tr>
+    <tr>
+        <td>
+            uploadUrl
+        </td>
+        <td>
+            string
+        </td>
+        <td>
+            `/files/`
+        </td>
+        <td>
+            
+        </td>
+    </tr>
+    <tr>
+        <td>
+            maxPostSize
+        </td>
+        <td>
+            integer
+        </td>
+        <td>
+            11000000
+        </td>
+        <td>
+            
+        </td>
+    </tr>
+    <tr>
+        <td>
+            minFileSize
+        </td>
+        <td>
+            integer
+        </td>
+        <td>
+            1
+        </td>
+        <td>
+            
+        </td>
+    </tr>
+    <tr>
+        <td>
+            maxFileSize
+        </td>
+        <td>
+            integer
+        </td>
+        <td>
+            10000000
+        </td>
+        <td>
+            
+        </td>
+    </tr>
+    <tr>
+        <td>
+            acceptFileTypes
+        </td>
+        <td>
+            regexp
+        </td>
+        <td>
+            `/.+/i`
+        </td>
+        <td>
+            
+        </td>
+    </tr>
+    <tr>
+        <td>
+            thumbSizes
+        </td>
+        <td>
+            array
+        </td>
+        <td>
+            [[100, 100]]
+        </td>
+        <td>
+            
+        </td>
+    </tr>
+    <tr>
+        <td>
+            imageTypes
+        </td>
+        <td>
+            regexp
+        </td>
+        <td>
+            `/\.(gif|jpe?g|png)$/i`
+        </td>
+        <td>
+            
+        </td>
+    </tr>
+</table>
 
 ## In the Wild
 
