@@ -26,17 +26,13 @@ var express = require('express'),
         Uploader = require('../lib/express-uploader'),
         app = express();
 
-// Settings
-var settings = {
-    node_port: process.argv[2] || 3000,
-    uploadpath: __dirname + '/uploads/'
-};
-
 // Configuration
 app.configure(function() {
+    app.use(express.static(__dirname + '/public'));
+    app.use(express.logger('dev'));
     // We need the bodyParser to form parsing old style uploads
     app.use(express.bodyParser({
-        uploadDir: '../uploads',
+      //  uploadDir: './tmpUploads',
         keepExtensions: true,
         encoding: 'utf8'
     }));
@@ -45,18 +41,19 @@ app.configure(function() {
     app.use(express['static'](__dirname));
 });
 
+// Create tmp dir
+// fs.mkdirSync('./tmpUploads', 755);
+
 /*
  * Display upload form
  */
 app.all('/',function (req, res) {
-    res.sendHeader(200, {"Content-Type": "text/html"});
-    res.sendBody(
+    res.send(
         '<form action="/upload" method="post" enctype="multipart/form-data">'+
-        '<input type="file" name="upload-file">'+
+        '<input type="file" name="upload-file"  multiple="true">'+
         '<input type="submit" value="Upload">'+
         '</form>'
     );
-    res.finish();
 });
 
 /*
@@ -64,11 +61,14 @@ app.all('/',function (req, res) {
  */
 app.all('/upload', function(req, res, next) {
     var uploader = new Uploader({
+        debug: true,
         validate: true,
+        thumbnails: true,
+        thumbToSubDir: true,
         tmpDir: __dirname + '/tmp',
         publicDir: __dirname + '/public',
         uploadDir: __dirname + '/public/files',
-        uploadUrl: '/getid/',
+        uploadUrl: '/files/',
         thumbSizes: [140,[100, 100]]
     });
 
