@@ -1,0 +1,23 @@
+{
+"name": "express-uploader",
+        "description": "(pending)",
+        "version": "0.0.1",
+        "main": "./${projectName}.js",
+  "homepage": "https://github.com/biggora/express-uploader/",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/biggora/express-uploader.git"
+  },
+  "author": "Aleksej Gordejev <aleksej@gordejev.lv> (https://github.com/biggora/)",
+  "keywords": [
+    "mongodb",
+    "session",
+    "store",
+    "express",
+    "middleware",
+    "mongoose"
+  ],
+        "licenses": {
+"type": "MIT"
+        }
+}
