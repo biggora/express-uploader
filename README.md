@@ -1,5 +1,6 @@
 ## File upload middleware for NodeJS
 
+Uploading files middleware for NodeJS, Express, TrinteJS, Connect.
 
 ## Installation
 
