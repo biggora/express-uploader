@@ -1,7 +1,7 @@
 {
     "name": "express-uploader",
     "description": "File uploads with NodeJS",
-    "version": "0.0.4",
+    "version": "0.0.5",
     "main": "./index.js",
     "scripts": {
         "test": "node tests/test.js"
@@ -37,6 +37,16 @@
         "node-uuid": ">=1.4.1"
     },
     "devDependencies": {
-        "express": ">=3.0"
+        "express": ">=3.0",
+        "connect-multiparty": ">=1.0.3",
+        "morgan": ">=1.0.0",
+        "errorhandler": ">=1.0.0",
+        "compression": ">=1.0.0",
+        "express-session": ">=1.0.0",
+        "body-parser": ">=1.0.0",
+        "method-override": ">=1.0.0",
+        "cookie-parser": ">=1.0.0",
+        "gm": ">=1.14.2",
+        "node-uuid": ">=1.4.1"
     }
 }
