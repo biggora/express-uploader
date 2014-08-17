@@ -1,7 +1,7 @@
 {
     "name": "express-uploader",
     "description": "File uploads with NodeJS",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "main": "./index.js",
     "scripts": {
         "test": "node tests/test.js"
@@ -20,6 +20,8 @@
     "keywords": [
         "trinte",
         "upload",
+        "uploading",
+        "uploader",
         "express",
         "middleware",
         "connect"
@@ -31,10 +33,10 @@
         "node >= 0.8.0"
     ],
     "dependencies": {
-        "gm": ">=1.14.2",
+        "gm": ">=1.16.0",
         "node-uuid": ">=1.4.1"
     },
     "devDependencies": {
-        "express": "3.x"
+        "express": ">=3.0"
     }
 }
