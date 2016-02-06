@@ -22,5 +22,5 @@
  * THE SOFTWARE.
  */
 
-var express = require('express'),
-        Uploader = require('../lib/express-uploader');
+var express = require('express');
+var Uploader = require('../lib/express-uploader');

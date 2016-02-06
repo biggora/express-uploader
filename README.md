@@ -278,7 +278,7 @@ Options
             [[100, 100]]
         </td>
         <td>
-            
+            [width, neight]
         </td>
     </tr>
     <tr>
@@ -294,6 +294,62 @@ Options
         <td>
             
         </td>
+    </tr>
+    <tr>
+            <td>
+                resize
+            </td>
+            <td>
+                boolean
+            </td>
+            <td>
+                false
+            </td>
+            <td>
+                if need resize image
+            </td>
+    </tr>
+    <tr>
+            <td>
+                newSize
+            </td>
+            <td>
+                mixed
+            </td>
+            <td>
+                `[800, 600]`
+            </td>
+            <td>
+                new size for image
+            </td>
+    </tr>
+    <tr>
+            <td>
+                crop
+            </td>
+            <td>
+                boolean
+            </td>
+            <td>
+                false
+            </td>
+            <td>
+                if need crop image
+            </td>
+    </tr>
+    <tr>
+            <td>
+                coordinates
+            </td>
+            <td>
+                mixed
+            </td>
+            <td>
+                `[800,600,0,0]`
+            </td>
+            <td>
+                 coordinates for crop image [width, height, x, y]
+            </td>
     </tr>
 </table>
 

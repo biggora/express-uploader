@@ -68,8 +68,8 @@ app.use(cookieParser('weritas10'));
 app.all('/', function(req, res) {
     res.send(
             '<form action="/upload" method="post" enctype="multipart/form-data">' +
-            '<input type="file" name="upload-file"  multiple="true">' +
-            '<input type="submit" value="Upload">' +
+            '  <input type="file" name="upload-file"  multiple="true">' +
+            '  <input type="submit" value="Upload">' +
             '</form>'
             );
 });
