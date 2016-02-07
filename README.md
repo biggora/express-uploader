@@ -342,13 +342,13 @@ Options
                 coordinates
             </td>
             <td>
-                mixed
+                object
             </td>
             <td>
-                `[800,600,0,0]`
+                `{width:800,height:600,x:0,y:0}`
             </td>
             <td>
-                 coordinates for crop image [width, height, x, y]
+                 coordinates for crop image { width:800, height:600, x:0, y:0 }
             </td>
     </tr>
 </table>
