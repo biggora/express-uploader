@@ -73,6 +73,7 @@ Options
 | debug | boolean | false |
 | safeName | boolean | true |
 | validate | boolean | false |
+| quality | number | 80 |
 | thumbnails | boolean | false |
 | thumbToSubDir | boolean | false |
 | tmpDir | string | `/tmp` |
