@@ -1,7 +1,7 @@
 {
     "name": "express-uploader",
     "description": "File uploads with NodeJS",
-    "version": "0.1.2",
+    "version": "0.1.3",
     "main": "./index.js",
     "scripts": {
         "test": "node tests/test.js"
