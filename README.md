@@ -107,13 +107,6 @@ by getting in touch or submitting a pull request with changes to the README.
 - [MongoDB Session Storage for ExpressJS](https://github.com/biggora/express-mongodb)
 - [2CO NodeJS adapter for 2checkout API payment gateway](https://github.com/biggora/2co)
 
-### Startups & Apps
-
-- [TViMama](http://tvimama.com/)
-- [GorkaTV](https://gorkatv.com/)
-- [TrinteJS](http://www.trintejs.com/)
-- [CaminteJS](http://www.camintejs.com/)
-
 ## Author
 
 Aleksej Gordejev (aleksej@gordejev.lv).
