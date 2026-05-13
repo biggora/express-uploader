@@ -64,10 +64,10 @@
     "express-session": "^1.15.4",
     "method-override": "^3.0.0",
     "morgan": "^1.10.1",
-    "multer": "^3.0.0-alpha.1",
+    "multer": "^2.1.1",
     "prettier": "^3.6.2",
     "typescript": "^4.9.5",
     "typescript-eslint": "^8.46.2",
-    "vitest": "^2.1.9"
+    "vitest": "^4.1.6"
   }
 }
