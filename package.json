@@ -43,7 +43,7 @@
   "dependencies": {
     "gm": "^1.25.1",
     "tslib": "^2.8.1",
-    "uuid": "^13.0.0"
+    "uuid": "13.0.1"
   },
   "devDependencies": {
     "@types/body-parser": "^1.19.6",
@@ -55,7 +55,7 @@
     "@types/multer": "^1.4.12",
     "@types/node": "^18.15.11",
     "@types/uuid": "^9.0.1",
-    "body-parser": "^1.17.2",
+    "body-parser": "2.2.1",
     "compression": "^1.7.0",
     "cookie-parser": "^1.4.3",
     "errorhandler": "^1.5.0",
