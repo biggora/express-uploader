@@ -1,13 +1,13 @@
 /*
  * The MIT License
  *
- * Copyright 2013 Alexey Gordeyev <aleksej@gordejev.lv>.
+ * Copyright 2013 Alexey Gordejev <aleksej@gordejev.lv>.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
+ * copies of the Software, and to whom the Software is
  * furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
@@ -22,4 +22,11 @@
  * THE SOFTWARE.
  */
 
-module.exports = require('./lib/express-uploader');
+import { Uploader } from './lib/express-uploader';
+
+// Export for ES6 modules
+export default Uploader;
+export { Uploader };
+
+// For maximum compatibility, we can make a UMD-style export
+// But since we're using modern TypeScript, the esModuleInterop should handle this

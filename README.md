@@ -9,6 +9,15 @@ To install express-uploader:
 
     $ npm install -g express-uploader
 
+## Development
+
+For development, after cloning the repository, install dependencies and build the project:
+
+    $ npm install
+    $ npm run build
+
+This will compile the TypeScript source files to JavaScript in the `dist` directory.
+
 ## Usage overview
 
 ### for TrinteJS
@@ -43,53 +52,50 @@ module.exports = function routes(map) {
 ### for ExpressJS
 
 ```js
-
 var Uploader = require('express-uploader');
 
-app.all('/upload', function(req, res, next) {
-    var uploader = new Uploader({
-        debug: true,
-        validate: true,
-        thumbnails: true,
-        thumbToSubDir: true,
-        tmpDir: __dirname + '/tmp',
-        publicDir: __dirname + '/public',
-        uploadDir: __dirname + '/public/files',
-        uploadUrl: '/files/',
-        thumbSizes: [140,[100, 100]]
-    });
-    uploader.uploadFile(req, function(data) {
-        res.send(JSON.stringify(data), {'Content-Type': 'text/plain'}, 200);
-    });
+app.all('/upload', function (req, res, next) {
+  var uploader = new Uploader({
+    debug: true,
+    validate: true,
+    thumbnails: true,
+    thumbToSubDir: true,
+    tmpDir: __dirname + '/tmp',
+    publicDir: __dirname + '/public',
+    uploadDir: __dirname + '/public/files',
+    uploadUrl: '/files/',
+    thumbSizes: [140, [100, 100]],
+  });
+  uploader.uploadFile(req, function (data) {
+    res.send(JSON.stringify(data), { 'Content-Type': 'text/plain' }, 200);
+  });
 });
-
 ```
 
-Options
------------------
+## Options
 
-| Name | Type | Default | Description |
-| --- | --- | --- | --- |
-| debug | boolean | false |
-| safeName | boolean | true |
-| validate | boolean | false |
-| quality | number | 80 |
-| thumbnails | boolean | false |
-| thumbToSubDir | boolean | false |
-| tmpDir | string | `/tmp` |
-| publicDir | string | `/public` |
-| uploadDir | string | `/public/files` |
-| uploadUrl | string | `/files/` |
-| maxPostSize | integer | 11000000 |
-| minFileSize | integer | 1 |
-| maxFileSize | integer | 10000000 |
-| acceptFileTypes | regexp | `/.+/i` |
-| thumbSizes | array | [[100, 100]] | [width, neight] |
-| imageTypes | regexp | `/\.(gif|jpe?g|png)$/i` |
-| resize | boolean | false | if need resize image |
-| newSize | mixed | `[800, 600]` | new size for image [width, height] |
-| crop | boolean | false | if need crop image |
-| coordinates | object | `{width:800,height:600,x:0,y:0}` | coordinates for crop image { width:1200, height:800, x:0, y:0 } |
+| Name            | Type    | Default                          | Description                                                     |
+| --------------- | ------- | -------------------------------- | --------------------------------------------------------------- | -------- |
+| debug           | boolean | false                            |
+| safeName        | boolean | true                             |
+| validate        | boolean | false                            |
+| quality         | number  | 80                               |
+| thumbnails      | boolean | false                            |
+| thumbToSubDir   | boolean | false                            |
+| tmpDir          | string  | `/tmp`                           |
+| publicDir       | string  | `/public`                        |
+| uploadDir       | string  | `/public/files`                  |
+| uploadUrl       | string  | `/files/`                        |
+| maxPostSize     | integer | 11000000                         |
+| minFileSize     | integer | 1                                |
+| maxFileSize     | integer | 10000000                         |
+| acceptFileTypes | regexp  | `/.+/i`                          |
+| thumbSizes      | array   | [[100, 100]]                     | [width, neight]                                                 |
+| imageTypes      | regexp  | `/\.(gif                         | jpe?g                                                           | png)$/i` |
+| resize          | boolean | false                            | if need resize image                                            |
+| newSize         | mixed   | `[800, 600]`                     | new size for image [width, height]                              |
+| crop            | boolean | false                            | if need crop image                                              |
+| coordinates     | object  | `{width:800,height:600,x:0,y:0}` | coordinates for crop image { width:1200, height:800, x:0, y:0 } |
 
 ## In the Wild
 
@@ -110,7 +116,6 @@ by getting in touch or submitting a pull request with changes to the README.
 ## Author
 
 Aleksej Gordejev (aleksej@gordejev.lv).
-
 
 ## License
 
@@ -137,7 +142,6 @@ CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-
 ## Resources
 
 - Visit the [author website](http://www.gordejev.lv).
@@ -146,5 +150,4 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 [![Analytics](https://ga-beacon.appspot.com/UA-22788134-5/express-uploader/readme)](https://github.com/igrigorik/ga-beacon)
 
-[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/biggora/express-uploader/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
-
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/biggora/express-uploader/trend.png)](https://bitdeli.com/free 'Bitdeli Badge')

@@ -1,50 +1,71 @@
 {
-    "name": "express-uploader",
-    "description": "File uploads with NodeJS",
-    "version": "0.1.4",
-    "main": "./index.js",
-    "scripts": {
-        "test": "node tests/test.js"
-    },
-    "directories": {
-        "lib": "lib",
-        "media": "examples",
-        "tests": "tests"
-    },
-    "homepage": "https://github.com/biggora/express-uploader/",
-    "repository": {
-        "type": "git",
-        "url": "git://github.com/biggora/express-uploader.git"
-    },
-    "author": "Aleksej Gordejev <aleksej@gordejev.lv> (https://github.com/biggora/)",
-    "keywords": [
-        "trinte",
-        "upload",
-        "uploading",
-        "uploader",
-        "express",
-        "middleware",
-        "connect"
-    ],
-    "license": "MIT",
-    "engines": {
-        "node": ">=4.3.0",
-        "npm": ">=2.15.11"
-    },
-    "dependencies": {
-        "gm": "^1.23.0",
-        "uuid": "^3.1.0"
-    },
-    "devDependencies": {
-        "express": ">=3.0",
-        "connect-multiparty": ">=1.0.3",
-        "morgan": "^1.8.2",
-        "errorhandler": "^1.5.0",
-        "compression": "^1.7.0",
-        "express-session": "^1.15.4",
-        "body-parser": "^1.17.2",
-        "method-override": "^1.0.0",
-        "cookie-parser": "^1.4.3",
-        "gm": "^1.23.0"
-    }
+  "name": "express-uploader",
+  "description": "File uploads with NodeJS",
+  "version": "0.1.4",
+  "main": "./dist/index.js",
+  "types": "./index.d.ts",
+  "scripts": {
+    "test": "npm run build && node dist/tests/test.js",
+    "test:comprehensive": "npm run build && node dist/tests/comprehensive-test.js",
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "format": "prettier --write \"**/*.{ts,tsx,js,cjs,mjs,json,md}\"",
+    "lint": "eslint \"{lib,tests,examples}/**/*.{ts,tsx}\"",
+    "lint:fix": "npm run lint -- --fix",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "directories": {
+    "lib": "lib",
+    "media": "examples",
+    "tests": "tests"
+  },
+  "homepage": "https://github.com/biggora/express-uploader/",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/biggora/express-uploader.git"
+  },
+  "author": "Aleksej Gordejev <aleksej@gordejev.lv> (https://github.com/biggora/)",
+  "keywords": [
+    "trinte",
+    "upload",
+    "uploading",
+    "uploader",
+    "express",
+    "middleware",
+    "connect"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "gm": "^1.25.1",
+    "tslib": "^2.8.1",
+    "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "@types/body-parser": "^1.19.6",
+    "@types/cookie-parser": "^1.4.3",
+    "@types/express": "^4.17.17",
+    "@types/gm": "^1.25.4",
+    "@types/method-override": "^0.0.32",
+    "@types/morgan": "^1.9.4",
+    "@types/multer": "^1.4.12",
+    "@types/node": "^18.15.11",
+    "@types/uuid": "^9.0.1",
+    "body-parser": "^1.17.2",
+    "compression": "^1.7.0",
+    "cookie-parser": "^1.4.3",
+    "errorhandler": "^1.5.0",
+    "eslint": "^9.38.0",
+    "express": "^5.1.0",
+    "express-session": "^1.15.4",
+    "method-override": "^3.0.0",
+    "morgan": "^1.10.1",
+    "multer": "^3.0.0-alpha.1",
+    "prettier": "^3.6.2",
+    "typescript": "^4.9.5",
+    "typescript-eslint": "^8.46.2"
+  }
 }

@@ -2,3 +2,6 @@
 node_modules
 examples/tmp/
 examples/public/
+specs/
+
+QWEN.md
