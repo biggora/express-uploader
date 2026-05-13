@@ -1,3 +1,7 @@
+[![npm version](https://img.shields.io/npm/v/express-uploader.svg)](https://www.npmjs.com/package/express-uploader)
+[![CI](https://img.shields.io/github/actions/workflow/status/biggora/express-uploader/ci.yml?branch=master)](https://github.com/biggora/express-uploader/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 ## File uploader
 
 Uploading files middleware for NodeJS, Express, TrinteJS, Connect.
