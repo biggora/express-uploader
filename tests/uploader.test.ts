@@ -11,7 +11,9 @@ const requireFromTest = createRequire(__filename);
 interface MockRequest {
   files: Record<string, unknown>;
   xhr: boolean;
-  header: (name: string) => string | null;
+  header: (name: string) => string | null | undefined;
+  on: (event: string, listener: (...args: never[]) => void) => unknown;
+  pipe: (dest: NodeJS.WritableStream) => unknown;
 }
 
 const tempRoots: string[] = [];
@@ -37,6 +39,8 @@ function createRequest(files: Record<string, unknown> = {}): MockRequest {
     files,
     xhr: false,
     header: () => null,
+    on: () => undefined,
+    pipe: () => undefined,
   };
 }
 
@@ -359,5 +363,110 @@ describe('Uploader', () => {
     expect(CommonJsUploader.Uploader).toBe(CommonJsUploader);
     expect(CommonJsUploader.default).toBe(CommonJsUploader);
     expect(new CommonJsUploader().uploadFile).toBeTypeOf('function');
+  });
+
+  it('reports Invalid upload headers when XHR x-file-name is missing', async () => {
+    const root = createTempRoot();
+    const uploader = createUploader(root);
+    const request = Readable.from([Buffer.from('payload')]) as Readable & MockRequest;
+    request.files = {};
+    request.xhr = true;
+    request.header = () => null;
+
+    const result = await uploadFile(uploader, request);
+
+    expect(Array.isArray(result)).toBe(false);
+    const file = result as UploadResult;
+    expect(file.error).toBe('Invalid upload headers');
+  });
+
+  it('reports Invalid upload headers when XHR x-file-size is non-numeric', async () => {
+    const root = createTempRoot();
+    const uploader = createUploader(root);
+    const request = Readable.from([Buffer.from('payload')]) as Readable & MockRequest;
+    request.files = {};
+    request.xhr = true;
+    request.header = (name: string) => {
+      if (name.toLowerCase() === 'x-file-name') return 'broken.txt';
+      if (name.toLowerCase() === 'x-file-size') return 'not-a-number';
+      return null;
+    };
+
+    const result = await uploadFile(uploader, request);
+
+    expect(Array.isArray(result)).toBe(false);
+    const file = result as UploadResult;
+    expect(file.error).toBe('Invalid upload headers');
+  });
+
+  it('returns a validation error for oversized files on the form path', async () => {
+    const root = createTempRoot();
+    const uploader = createUploader(root, { validate: true, maxFileSize: 4 });
+    const sourcePath = writeUploadSource(root, 'oversized.tmp', 'this is too big');
+    const req = createRequest({
+      big: { path: sourcePath, name: 'oversized.txt', size: 15, type: 'text/plain' },
+    });
+
+    const result = await uploadFile(uploader, req);
+
+    expect(Array.isArray(result)).toBe(true);
+    const [file] = result as UploadResult[];
+    expect(file).toMatchObject({
+      originalName: 'oversized.txt',
+      success: false,
+      error: 'File is too big',
+    });
+    expect(fs.existsSync(path.join(root, 'public', 'files', 'oversized.txt'))).toBe(false);
+  });
+
+  it('keeps numbering safe names beyond the first collision', async () => {
+    const root = createTempRoot();
+    const uploader = createUploader(root);
+    const uploadDir = path.join(root, 'public', 'files');
+    fs.mkdirSync(uploadDir, { recursive: true });
+    for (let i = 0; i <= 9; i++) {
+      const name = i === 0 ? 'avatar.txt' : `avatar_${i}.txt`;
+      fs.writeFileSync(path.join(uploadDir, name), 'existing');
+    }
+    const sourcePath = writeUploadSource(root, 'fresh-upload.tmp', 'new');
+    const req = createRequest({
+      avatar: { path: sourcePath, name: 'avatar.txt', size: 3, type: 'text/plain' },
+    });
+
+    const result = await uploadFile(uploader, req);
+
+    expect(Array.isArray(result)).toBe(true);
+    const [file] = result as UploadResult[];
+    expect(file.name).toBe('avatar_10.txt');
+    expect(fs.readFileSync(path.join(uploadDir, 'avatar_10.txt'), 'utf8')).toBe('new');
+  });
+
+  it('accepts a single Multer file passed under req.files directly', async () => {
+    const root = createTempRoot();
+    const uploader = createUploader(root);
+    const sourcePath = writeUploadSource(root, 'single-multer.tmp', 'one shot');
+    const req = {
+      files: {
+        path: sourcePath,
+        originalname: 'single.txt',
+        size: 8,
+        mimetype: 'text/plain',
+      },
+      xhr: false,
+      header: () => null,
+    } as unknown as MockRequest;
+
+    const result = await uploadFile(uploader, req);
+
+    expect(Array.isArray(result)).toBe(true);
+    const [file] = result as UploadResult[];
+    expect(file).toMatchObject({
+      originalName: 'single.txt',
+      name: 'single.txt',
+      success: true,
+    });
+    expect(fs.readFileSync(path.join(root, 'public', 'files', 'single.txt'), 'utf8')).toBe(
+      'one shot'
+    );
   });
 });

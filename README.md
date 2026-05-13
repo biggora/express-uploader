@@ -103,6 +103,14 @@ app.all('/upload', function (req, res, next) {
 });
 ```
 
+### Callback result shape
+
+The shape of `data` depends on how the upload arrived:
+
+- **Form upload** (`req.files` populated by a multipart parser such as `multer`) — `data` is `UploadResult[]`, one entry per file. Use `Array.isArray(data)` to detect this branch.
+- **XHR streaming upload** (`req.xhr === true`, `x-file-name` / `x-file-size` headers) — `data` is a single `UploadResult` object. On invalid headers or stream errors, it carries `success: false` and an `error` message.
+- **Empty request** (no files attached) — `data` is a single synthetic `UploadResult` with `error: 'Not files found!'`.
+
 ## Options
 
 | Name            | Type    | Default                          | Description                                                     |

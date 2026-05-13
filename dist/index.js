@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 /*
  * The MIT License
  *
@@ -8,7 +8,7 @@
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to whom the Software is
+ * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
@@ -22,15 +22,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-Object.defineProperty(exports, '__esModule', { value: true });
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.Uploader = void 0;
-const express_uploader_1 = require('./lib/express-uploader');
-Object.defineProperty(exports, 'Uploader', {
-  enumerable: true,
-  get: function () {
-    return express_uploader_1.Uploader;
-  },
-});
+const express_uploader_1 = require("./lib/express-uploader");
+Object.defineProperty(exports, "Uploader", { enumerable: true, get: function () { return express_uploader_1.Uploader; } });
 // Export for ES6 modules
 exports.default = express_uploader_1.Uploader;
 const commonJsExport = express_uploader_1.Uploader;
