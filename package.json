@@ -3,11 +3,20 @@
   "description": "File uploads with NodeJS",
   "version": "0.1.4",
   "main": "./dist/index.js",
-  "types": "./index.d.ts",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist/index.js",
+    "dist/index.js.map",
+    "dist/index.d.ts",
+    "dist/index.d.ts.map",
+    "dist/lib/**/*",
+    "README.md"
+  ],
   "scripts": {
     "test": "vitest run",
     "test:legacy": "npm run build && node dist/tests/test.js",
     "test:comprehensive": "npm run build && node dist/tests/comprehensive-test.js",
+    "test:compat": "npm run build && node tests/compatibility-test.js",
     "build": "tsc",
     "dev": "tsc --watch",
     "format": "prettier --write \"**/*.{ts,tsx,js,cjs,mjs,json,md}\"",

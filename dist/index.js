@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 /*
  * The MIT License
  *
@@ -22,12 +22,19 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-Object.defineProperty(exports, "__esModule", { value: true });
+Object.defineProperty(exports, '__esModule', { value: true });
 exports.Uploader = void 0;
-const express_uploader_1 = require("./lib/express-uploader");
-Object.defineProperty(exports, "Uploader", { enumerable: true, get: function () { return express_uploader_1.Uploader; } });
+const express_uploader_1 = require('./lib/express-uploader');
+Object.defineProperty(exports, 'Uploader', {
+  enumerable: true,
+  get: function () {
+    return express_uploader_1.Uploader;
+  },
+});
 // Export for ES6 modules
 exports.default = express_uploader_1.Uploader;
-// For maximum compatibility, we can make a UMD-style export
-// But since we're using modern TypeScript, the esModuleInterop should handle this
+const commonJsExport = express_uploader_1.Uploader;
+commonJsExport.Uploader = express_uploader_1.Uploader;
+commonJsExport.default = express_uploader_1.Uploader;
+module.exports = commonJsExport;
 //# sourceMappingURL=index.js.map

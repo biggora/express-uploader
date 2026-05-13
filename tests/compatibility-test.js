@@ -16,11 +16,13 @@ try {
     console.log('✓ CommonJS import creates valid Uploader instance');
   } else {
     console.log('✗ CommonJS import failed to create valid instance');
+    process.exitCode = 1;
   }
 
   console.log('✓ Backward compatibility maintained');
 } catch (error) {
   console.error('✗ Backward compatibility test failed:', error.message);
+  process.exitCode = 1;
 }
 
 // Test named imports (ES6 style)
@@ -33,9 +35,11 @@ try {
     console.log('✓ ES6-style named imports work');
   } else {
     console.log('✗ ES6-style named imports failed');
+    process.exitCode = 1;
   }
 } catch (error) {
   console.error('✗ ES6-style import test failed:', error.message);
+  process.exitCode = 1;
 }
 
 console.log('\nBackward compatibility test completed.');

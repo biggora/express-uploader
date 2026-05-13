@@ -21,7 +21,7 @@ console.log('✓ Can create Uploader instance from .default property');
 // This is actually a common pattern in modern libraries that support both ES and CommonJS.
 console.log('\\nNote: This is the standard approach for dual ES/CommonJS module support.');
 console.log(
-  'Consumers using CommonJS will need to use: const Uploader = require("./dist").default',
+  'Consumers using CommonJS will need to use: const Uploader = require("./dist").default'
 );
 console.log('Or use destructuring: const { default: Uploader } = require("./dist");');
 

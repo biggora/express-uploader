@@ -23,10 +23,23 @@
  */
 
 import { Uploader } from './lib/express-uploader';
+export type {
+  FileObject,
+  SafeNameCallback,
+  UploadCallback,
+  UploaderOptions,
+  UploadResult,
+} from './lib/express-uploader';
 
 // Export for ES6 modules
 export default Uploader;
 export { Uploader };
 
-// For maximum compatibility, we can make a UMD-style export
-// But since we're using modern TypeScript, the esModuleInterop should handle this
+const commonJsExport = Uploader as typeof Uploader & {
+  Uploader: typeof Uploader;
+  default: typeof Uploader;
+};
+
+commonJsExport.Uploader = Uploader;
+commonJsExport.default = Uploader;
+module.exports = commonJsExport;
