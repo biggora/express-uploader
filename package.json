@@ -1,6 +1,6 @@
 {
   "name": "express-uploader",
-  "description": "File uploads with NodeJS",
+  "description": "Express / Connect file-upload middleware with optional GraphicsMagick resize, crop and thumbnail generation. Ships TypeScript declarations.",
   "version": "1.0.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -14,9 +14,6 @@
   ],
   "scripts": {
     "test": "vitest run",
-    "test:legacy": "npm run build && node dist/tests/test.js",
-    "test:comprehensive": "npm run build && node dist/tests/comprehensive-test.js",
-    "test:compat": "npm run build && node tests/compatibility-test.js",
     "build": "tsc",
     "dev": "tsc --watch",
     "example": "npm run build && node dist/examples/server.js",
@@ -34,7 +31,7 @@
   "homepage": "https://github.com/biggora/express-uploader/",
   "repository": {
     "type": "git",
-    "url": "git://github.com/biggora/express-uploader.git"
+    "url": "git+https://github.com/biggora/express-uploader.git"
   },
   "author": "Aleksej Gordejev <aleksej@gordejev.lv> (https://github.com/biggora/)",
   "keywords": [
@@ -44,7 +41,12 @@
     "uploader",
     "express",
     "middleware",
-    "connect"
+    "connect",
+    "multer",
+    "file-upload",
+    "typescript",
+    "graphicsmagick",
+    "thumbnails"
   ],
   "license": "MIT",
   "engines": {
@@ -52,8 +54,7 @@
   },
   "dependencies": {
     "gm": "^1.25.1",
-    "tslib": "^2.8.1",
-    "uuid": "13.0.1"
+    "tslib": "^2.8.1"
   },
   "devDependencies": {
     "@types/body-parser": "^1.19.6",
@@ -64,7 +65,6 @@
     "@types/morgan": "^1.9.4",
     "@types/multer": "^1.4.12",
     "@types/node": "^22.19.19",
-    "@types/uuid": "^9.0.1",
     "body-parser": "2.2.1",
     "compression": "^1.7.0",
     "cookie-parser": "^1.4.3",

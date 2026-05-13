@@ -34,8 +34,6 @@ Useful maintainer commands:
 
     $ npm run build
     $ npm run example          # build, then start the example server on 127.0.0.1:3000
-    $ npm run test:legacy
-    $ npm run test:comprehensive
     $ npm run lint
     $ npm run typecheck
 
