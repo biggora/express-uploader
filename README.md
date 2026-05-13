@@ -37,25 +37,6 @@ Useful maintainer commands:
     $ npm run lint
     $ npm run typecheck
 
-## CI and release automation
-
-GitHub Actions uses `.github/workflows/unit-tests.yml` for test automation. The
-workflow runs on `push` and `pull_request`, installs dependencies with `npm ci`,
-and then runs `npm run typecheck`, `npm run lint`, and `npm test` on Node.js 22
-and 24.
-
-Publishing is handled by `.github/workflows/publish.yml`. The publish workflow
-runs only for pushed tags that match `v*`, uses the protected GitHub environment
-named `npm-publish`, installs npm `^11.5.1`, runs `npm ci`, runs `npm test`,
-checks package contents with `npm publish --dry-run`, and then runs
-`npm publish`.
-
-The npm publish path uses GitHub Actions OIDC Trusted Publishing. Do not add
-`NODE_AUTH_TOKEN`, `NPM_TOKEN`, or a `registry-url` setting to this workflow.
-Before the first release tag is pushed, configure npm Trusted Publishing for
-package `express-uploader` with repository `biggora/express-uploader`, workflow
-`.github/workflows/publish.yml`, and environment `npm-publish`.
-
 ## Usage overview
 
 ### for TrinteJS
@@ -289,38 +270,7 @@ The following projects use express-uploader.
 If you are using express-uploader in a project, app, or module, get on the list below
 by getting in touch or submitting a pull request with changes to the README.
 
-## Author
-
-Aleksej Gordejev (aleksej@gordejev.lv).
-
 ## License
 
-(The MIT License)
-
-Copyright (c) 2012 Aleksej Gordejev <aleksej@gordejev.lv>
-
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-'Software'), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
-
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-## Resources
-
-- Visit the [author website](http://www.gordejev.lv).
-- Follow [@biggora](https://twitter.com/#!/biggora) on Twitter for updates.
-- Report issues on the [github issues](https://github.com/biggora/express-uploader/issues) page.
+[MIT](LICENSE) © Aleksejs Gordejevs and contributors.
 
