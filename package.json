@@ -19,6 +19,7 @@
     "test:compat": "npm run build && node tests/compatibility-test.js",
     "build": "tsc",
     "dev": "tsc --watch",
+    "example": "npm run build && node dist/examples/server.js",
     "format": "prettier --write \"**/*.{ts,tsx,js,cjs,mjs,json,md}\"",
     "lint": "eslint \"{lib,tests,examples}/**/*.{ts,tsx}\"",
     "lint:fix": "npm run lint -- --fix",
