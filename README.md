@@ -11,12 +11,39 @@ To install express-uploader:
 
 ## Development
 
-For development, after cloning the repository, install dependencies and build the project:
+For development, after cloning the repository, install dependencies and run the
+test suite:
 
-    $ npm install
+    $ npm ci
+    $ npm test
+
+The default test command runs `vitest run`.
+
+Useful maintainer commands:
+
     $ npm run build
+    $ npm run test:legacy
+    $ npm run test:comprehensive
+    $ npm run lint
+    $ npm run typecheck
 
-This will compile the TypeScript source files to JavaScript in the `dist` directory.
+## CI and release automation
+
+GitHub Actions uses `.github/workflows/unit-tests.yml` for test automation. The
+workflow runs on `push` and `pull_request`, installs dependencies with `npm ci`,
+and runs `npm test` on Node.js 22 and 24.
+
+Publishing is handled by `.github/workflows/publish.yml`. The publish workflow
+runs only for pushed tags that match `v*`, uses the protected GitHub environment
+named `npm-publish`, installs npm `^11.5.1`, runs `npm ci`, runs `npm test`,
+checks package contents with `npm publish --dry-run`, and then runs
+`npm publish`.
+
+The npm publish path uses GitHub Actions OIDC Trusted Publishing. Do not add
+`NODE_AUTH_TOKEN`, `NPM_TOKEN`, or a `registry-url` setting to this workflow.
+Before the first release tag is pushed, configure npm Trusted Publishing for
+package `express-uploader` with repository `biggora/express-uploader`, workflow
+`.github/workflows/publish.yml`, and environment `npm-publish`.
 
 ## Usage overview
 
