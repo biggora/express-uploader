@@ -62,7 +62,7 @@ module.exports = function routes(map) {
             thumbSizes: [140, [100, 100]]
         });
         uploader.uploadFile(req, function(data) {
-            res.send(JSON.stringify(data), {'Content-Type': 'text/plain'}, 200);
+            res.type('text/plain').status(200).send(JSON.stringify(data));
         });
     });
 };
@@ -86,7 +86,7 @@ app.all('/upload', function (req, res, next) {
     thumbSizes: [140, [100, 100]],
   });
   uploader.uploadFile(req, function (data) {
-    res.send(JSON.stringify(data), { 'Content-Type': 'text/plain' }, 200);
+    res.type('text/plain').status(200).send(JSON.stringify(data));
   });
 });
 ```
@@ -273,4 +273,3 @@ by getting in touch or submitting a pull request with changes to the README.
 ## License
 
 [MIT](LICENSE) © Aleksejs Gordejevs and contributors.
-
