@@ -120,7 +120,7 @@ app.use(
       delete req.body._method;
       return method;
     }
-  }),
+  })
 );
 app.use((0, cookie_parser_1.default)('weritas10'));
 /*
@@ -131,7 +131,7 @@ app.all('/', (req, res) => {
     '<form action="/upload" method="post" enctype="multipart/form-data">' +
       '  <input type="file" name="upload-file"  multiple="true">' +
       '  <input type="submit" value="Upload">' +
-      '</form>',
+      '</form>'
   );
 });
 /*

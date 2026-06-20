@@ -511,7 +511,7 @@ class Uploader {
                   if (--totalSizes === 0) {
                     cb(info);
                   }
-                },
+                }
               );
           } else {
             gm(destinationDir + self.osSep + info.name)

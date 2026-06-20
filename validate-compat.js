@@ -65,6 +65,6 @@ console.log('⚠ CommonJS require (const Uploader = require("...")): May need .d
 console.log('✓ CommonJS named require (const {Uploader} = require("...")): Should work');
 console.log('✓ CommonJS default access (const Uploader = require("...").default): Works');
 console.log(
-  '\\nFor 100% backward compatibility, the library should export the constructor directly',
+  '\\nFor 100% backward compatibility, the library should export the constructor directly'
 );
 console.log('as module.exports, not as part of an object with a .default property.');

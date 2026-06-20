@@ -112,7 +112,7 @@ try {
   } else {
     console.error(
       '✗ Test 4 FAILED: Validation did not detect oversized file. Result:',
-      validationResult,
+      validationResult
     );
     failedTests++;
   }
@@ -138,14 +138,14 @@ try {
   } else {
     console.error(
       '✗ Test 5 FAILED: Validation incorrectly failed valid file. Result:',
-      validationResult,
+      validationResult
     );
     failedTests++;
   }
 } catch (error) {
   console.error(
     '✗ Test 5 FAILED: Error testing validation with valid file:',
-    (error as Error).message,
+    (error as Error).message
   );
   failedTests++;
 }

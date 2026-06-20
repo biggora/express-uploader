@@ -25,8 +25,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as util from 'util';
-import { v1 as uuidv1 } from 'uuid';
-import * as gm from 'gm';
+import { randomUUID } from 'crypto';
+import gm from 'gm';
 
 // Define interfaces for type safety
 export interface UploaderOptions {
@@ -38,6 +38,7 @@ export interface UploaderOptions {
   quality?: number;
   thumbnails?: boolean;
   thumbToSubDir?: boolean;
+  /** @deprecated No longer used — paths now use Node's `path.sep`/`path.join`. */
   osSep?: string;
   tmpDir?: string;
   publicDir?: string;
@@ -67,7 +68,18 @@ export interface FileObject {
   success?: boolean;
   error?: string;
   safeName?: string;
-  [key: string]: any; // Allow additional properties
+  [key: string]: unknown;
+}
+
+type UploaderRequestListener = (...args: never[]) => void;
+
+export interface UploaderRequest {
+  xhr?: boolean;
+  files?: unknown;
+  header(name: string): string | null | undefined;
+  on(event: string, listener: UploaderRequestListener): unknown;
+  pipe(dest: NodeJS.WritableStream): unknown;
+  unpipe?(dest?: NodeJS.WritableStream): void;
 }
 
 export interface UploadResult {
@@ -91,9 +103,16 @@ export interface UploadCallback {
   (result: UploadResult | UploadResult[] | FileObject): void;
 }
 
-// Default options interface
+// Default options interface — every field has a default, so all are required here.
 interface DefaultOptions extends UploaderOptions {
-  osSep: string;
+  debug: boolean;
+  safeName: boolean;
+  validate: boolean;
+  resize: boolean;
+  crop: boolean;
+  quality: number;
+  thumbnails: boolean;
+  thumbToSubDir: boolean;
   tmpDir: string;
   publicDir: string;
   uploadDir: string;
@@ -125,7 +144,6 @@ const defaultOptions: DefaultOptions = {
   quality: 80,
   thumbnails: false,
   thumbToSubDir: false,
-  osSep: /^win/i.test(process.platform) ? '\\' : '/',
   tmpDir: path.join(__dirname, 'tmp'),
   publicDir: path.join(__dirname, 'public'),
   uploadDir: path.join(__dirname, 'public', 'files'),
@@ -147,38 +165,21 @@ const defaultOptions: DefaultOptions = {
 
 export class Uploader {
   public settings: DefaultOptions;
-  private osSep: string;
 
   constructor(options?: UploaderOptions) {
-    // Create settings object by copying defaults
-    this.settings = { ...defaultOptions };
+    this.settings = { ...defaultOptions, ...(options ?? {}) };
 
-    // Override with user options
-    if (options) {
-      Object.keys(options).forEach((key: string) => {
-        if (Object.prototype.hasOwnProperty.call(options, key)) {
-          (this.settings as any)[key] = (options as any)[key];
-        }
-      });
-    }
-
-    // Normalize directory paths
-    ['tmpDir', 'publicDir', 'uploadDir'].forEach((key) => {
-      if (this.settings[key as keyof DefaultOptions]) {
-        const dir = this.settings[key as keyof DefaultOptions] as string;
-        if (dir) {
-          const normalizedDir = path.normalize(dir as string);
-          const sep = this.settings.osSep;
-          if (!new RegExp(sep.replace(/[\\^$*+?.()|[\]{}]/g, '\\$&') + '$').test(normalizedDir)) {
-            (this.settings as any)[key] = normalizedDir + sep;
-          } else {
-            (this.settings as any)[key] = normalizedDir;
-          }
-        }
-      }
+    const dirKeys = ['tmpDir', 'publicDir', 'uploadDir'] as const;
+    dirKeys.forEach((key) => {
+      const dir = this.settings[key];
+      if (!dir) return;
+      const normalized = path.normalize(dir);
+      this.settings[key] = normalized.endsWith(path.sep) ? normalized : normalized + path.sep;
     });
 
-    this.osSep = this.settings.osSep;
+    if (this.settings.uploadUrl && !this.settings.uploadUrl.endsWith('/')) {
+      this.settings.uploadUrl = this.settings.uploadUrl + '/';
+    }
   }
 
   pathToRoot(): string {
@@ -188,32 +189,123 @@ export class Uploader {
   _existsSync(filePath: string): boolean {
     try {
       return fs.existsSync(filePath);
-    } catch (err) {
+    } catch {
       return false;
     }
   }
 
-  utf8encode(str: string): string {
-    return unescape(encodeURIComponent(str));
+  private sanitizeFileName(name: string): string {
+    return path.basename(String(name || '').replace(/\\/g, '/')).replace(/^\.+/, '');
+  }
+
+  private createResult(file: FileObject, error?: string): UploadResult {
+    return {
+      originalName: file.name,
+      name: file.safeName || file.name,
+      size: file.size,
+      type: file.type,
+      destinationDir: this.settings.uploadDir,
+      url: this.settings.uploadUrl + (file.safeName || file.name),
+      thumbnails: [],
+      thumbnailObj: {},
+      success: error ? false : undefined,
+      error,
+    };
+  }
+
+  private safeUnlink(filePath?: string): void {
+    if (!filePath) return;
+    try {
+      if (this._existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    } catch (err) {
+      this.logging(' safeUnlink() - could not remove file.', err);
+    }
+  }
+
+  private destinationPath(uploadDir: string, fileName: string): string {
+    const root = path.resolve(uploadDir);
+    const target = path.resolve(root, fileName);
+    const relative = path.relative(root, target);
+    if (relative.startsWith('..') || path.isAbsolute(relative)) {
+      throw new Error('Invalid destination path');
+    }
+    return target;
+  }
+
+  private normalizeFile(input: unknown): FileObject | null {
+    if (!input || typeof input !== 'object') {
+      return null;
+    }
+    const raw = input as Record<string, unknown>;
+    if (typeof raw.path === 'undefined') {
+      return null;
+    }
+
+    const rawName = typeof raw.name === 'string' ? raw.name : raw.originalname;
+    const nameStr = typeof rawName === 'string' ? rawName : '';
+    const safeName = this.sanitizeFileName(nameStr || path.basename(String(raw.path)));
+    if (!safeName) {
+      return null;
+    }
+
+    const size = Number(raw.size);
+    return {
+      ...raw,
+      path: String(raw.path),
+      name: safeName,
+      size: Number.isFinite(size) ? size : 0,
+      type:
+        typeof raw.type === 'string'
+          ? raw.type
+          : typeof raw.mimetype === 'string'
+            ? raw.mimetype
+            : '',
+    };
+  }
+
+  private collectFiles(input: unknown): FileObject[] {
+    const files: FileObject[] = [];
+    const visit = (value: unknown): void => {
+      if (!value) return;
+      if (Array.isArray(value)) {
+        value.forEach(visit);
+        return;
+      }
+
+      const file = this.normalizeFile(value);
+      if (file) {
+        files.push(file);
+        return;
+      }
+
+      if (typeof value === 'object') {
+        const obj = value as Record<string, unknown>;
+        Object.keys(obj).forEach((key) => visit(obj[key]));
+      }
+    };
+
+    visit(input);
+    return files;
   }
 
   removeFile(filename: string, callback?: () => void): void {
-    const fName = path.basename(filename);
+    const fName = this.sanitizeFileName(filename);
     if (fName && fName !== '') {
-      const filePath = this.settings.uploadDir + this.osSep + fName;
-      if (this._existsSync(filePath)) {
-        fs.unlinkSync(filePath); // Sync version for simplicity
-      }
+      const filePath = this.destinationPath(this.settings.uploadDir, fName);
+      this.safeUnlink(filePath);
     }
     if (callback) callback();
   }
 
-  uploadFile(req: any, done: UploadCallback): void {
+  uploadFile(req: UploaderRequest, done: UploadCallback): void {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
     let totalFiles = 0;
     const files: FileObject[] = [];
     const info: UploadResult[] = [];
-    const toUpload = req.files;
+    const toUpload = req.files || {};
 
     self.logging('Start Uploader!');
     self.safeCreateDirectory(self.settings.tmpDir);
@@ -223,91 +315,10 @@ export class Uploader {
 
     // Direct async xhr stream data upload, yeah baby.
     if (req.xhr && !Object.keys(toUpload).length) {
-      const fname = req.header('x-file-name');
-      const fsize = parseInt(req.header('x-file-size'), 10);
-      const extension = path.extname(fname).toLowerCase();
-      // Be sure you can write to '/tmp/'
-      const tmpfile = self.settings.tmpDir + uuidv1() + extension;
-      const file: FileObject = {
-        path: tmpfile,
-        name: fname,
-        size: fsize,
-        type: '',
-      };
-
-      // Open a temporary writestream
-      const ws = fs.createWriteStream(tmpfile, {
-        flags: 'w',
-        encoding: 'binary',
-        mode: 0o755,
-      });
-
-      ws.on('error', function (err) {
-        self.logging(' uploadFile() - req.xhr - could not open writestream.');
-        file.success = false;
-        file.error = 'Sorry, could not open writestream.';
-        done(file);
-      });
-
-      ws.on('close', function (err?: Error) {
-        let validationResult: string | false = false;
-        if (self.settings.validate) {
-          self.logging('  Validate File!');
-          validationResult = self.validate(file);
-        }
-        self.moveFile(file, self.settings.uploadDir, validationResult, function (finfo) {
-          self.uploadInfo(finfo);
-          self.logging('Uploader closed!');
-          done(finfo);
-        });
-      });
-
-      ws.on('open', function () {
-        self.logging('Stream Open!');
-        req.pipe(ws);
-      });
-
-      // Writing filedata into writestream
-      req.on('data', function (data: Buffer) {
-        self.logging('Uploader onData!');
-        // ws.write(data);
-      });
-
-      req.on('end', function () {
-        self.logging('Uploader onEnd!');
-        ws.end();
-      });
+      self.uploadXhrFile(req, done);
     } else {
-      Object.keys(toUpload).forEach(function (key) {
-        if (Object.prototype.toString.call(toUpload[key]) === '[object Array]') {
-          toUpload[key].forEach(function (rfile: FileObject) {
-            if (typeof rfile.path !== 'undefined') {
-              ++totalFiles;
-              files.push(rfile);
-            } else if (typeof rfile === 'object') {
-              for (const i in rfile) {
-                if (typeof rfile[i].path !== 'undefined') {
-                  ++totalFiles;
-                  files.push(rfile[i]);
-                }
-              }
-            }
-          });
-        } else {
-          if (typeof toUpload[key].path !== 'undefined') {
-            ++totalFiles;
-            files.push(toUpload[key]);
-          } else if (typeof toUpload[key] === 'object') {
-            const iFile = toUpload[key];
-            for (const i in iFile) {
-              if (typeof iFile[i].path !== 'undefined') {
-                ++totalFiles;
-                files.push(iFile[i]);
-              }
-            }
-          }
-        }
-      });
+      files.push(...self.collectFiles(toUpload));
+      totalFiles = files.length;
 
       self.logging(' Received files: ' + totalFiles);
       if (totalFiles > 0) {
@@ -330,37 +341,20 @@ export class Uploader {
           }
 
           files.forEach(function (file: FileObject) {
-            let inValid = false;
-            let validationResult: string | false = false;
-            if (self.settings.validate) {
-              self.logging('  Validate File!');
-              validationResult = self.validate(file);
-            }
-
-            self.safeName(uploadedFiles, file.name, function (safeName: string) {
-              if (self.settings.safeName) {
-                file.safeName = safeName;
-              } else {
-                file.safeName = path.basename(file.path || '');
-              }
-
-              self.moveFile(file, self.settings.uploadDir, validationResult, function (fInfo) {
-                self.createThumbnail(fInfo, function (finfo) {
-                  info.push(finfo);
-                  if (--totalFiles === 0) {
-                    let totalUploaded = 0;
-                    info.forEach(function (inf) {
-                      self.uploadInfo(inf);
-                      if (inf.success) {
-                        ++totalUploaded;
-                      }
-                    });
-                    self.logging(' Total uploaded files: ' + totalUploaded);
-                    self.logging('Uploader closed!');
-                    done(info);
+            self.processUploadedFile(file, uploadedFiles, function (finfo) {
+              info.push(finfo);
+              if (--totalFiles === 0) {
+                let totalUploaded = 0;
+                info.forEach(function (inf) {
+                  self.uploadInfo(inf);
+                  if (inf.success) {
+                    ++totalUploaded;
                   }
                 });
-              });
+                self.logging(' Total uploaded files: ' + totalUploaded);
+                self.logging('Uploader closed!');
+                done(info);
+              }
             });
           });
         });
@@ -381,17 +375,134 @@ export class Uploader {
     }
   }
 
+  private uploadXhrFile(req: UploaderRequest, done: UploadCallback): void {
+    const rawName = req.header('x-file-name') ?? '';
+    const sanitizedName = this.sanitizeFileName(rawName);
+    const declaredSize = Number.parseInt(req.header('x-file-size') ?? '', 10);
+    const file: FileObject = {
+      name: sanitizedName,
+      size: Number.isFinite(declaredSize) ? declaredSize : 0,
+      type: '',
+    };
+
+    if (!sanitizedName || !Number.isFinite(declaredSize)) {
+      done(this.createResult(file, 'Invalid upload headers'));
+      return;
+    }
+
+    const extension = path.extname(sanitizedName).toLowerCase();
+    const tmpfile = path.join(this.settings.tmpDir, randomUUID() + extension);
+    file.path = tmpfile;
+
+    let completed = false;
+    let bytesWritten = 0;
+    const complete = (result: UploadResult | FileObject): void => {
+      if (completed) return;
+      completed = true;
+      done(result);
+    };
+    const fail = (message: string): void => {
+      file.size = bytesWritten;
+      this.safeUnlink(tmpfile);
+      complete(this.createResult(file, message));
+    };
+
+    const ws = fs.createWriteStream(tmpfile, {
+      flags: 'wx',
+      mode: 0o600,
+    });
+
+    ws.on('error', (err: Error) => {
+      this.logging(' uploadFile() - req.xhr - could not open writestream.', err);
+      fail('Sorry, could not open writestream.');
+    });
+
+    ws.on('close', () => {
+      if (completed) {
+        this.safeUnlink(tmpfile);
+        return;
+      }
+      file.size = bytesWritten;
+      fs.readdir(this.settings.uploadDir, (err, uploadedFiles) => {
+        if (err) {
+          this.safeUnlink(tmpfile);
+          complete(this.createResult(file, 'Error accessing upload directory'));
+          return;
+        }
+        this.processUploadedFile(file, uploadedFiles, (finfo) => {
+          this.uploadInfo(finfo);
+          this.logging('Uploader closed!');
+          complete(finfo);
+        });
+      });
+    });
+
+    req.on('data', (data: Buffer) => {
+      bytesWritten += data.length;
+      const exceedsPostSize = this.settings.maxPostSize && bytesWritten > this.settings.maxPostSize;
+      const exceedsFileSize =
+        this.settings.validate &&
+        this.settings.maxFileSize &&
+        bytesWritten > this.settings.maxFileSize;
+      if (exceedsPostSize || exceedsFileSize) {
+        if (typeof req.unpipe === 'function') {
+          req.unpipe(ws);
+        }
+        ws.destroy();
+        fail('File is too big');
+      }
+    });
+
+    req.on('error', (err: Error) => {
+      this.logging(' uploadFile() - req.xhr - request stream failed.', err);
+      ws.destroy();
+      fail('Request stream failed.');
+    });
+
+    req.pipe(ws);
+  }
+
+  private processUploadedFile(
+    file: FileObject,
+    uploadedFiles: string[],
+    callback: (info: UploadResult) => void
+  ): void {
+    let validationResult: string | false = false;
+    if (this.settings.validate) {
+      this.logging('  Validate File!');
+      validationResult = this.validate(file);
+    }
+
+    this.safeName(uploadedFiles, file.name, (safeName: string) => {
+      if (this.settings.safeName) {
+        file.safeName = safeName;
+      } else {
+        file.safeName = this.sanitizeFileName(path.basename(file.path || file.name));
+      }
+      uploadedFiles.push(file.safeName);
+
+      this.moveFile(file, this.settings.uploadDir, validationResult, (fInfo) => {
+        if (!fInfo.success) {
+          callback(fInfo);
+          return;
+        }
+        this.createThumbnail(fInfo, callback);
+      });
+    });
+  }
+
   moveFile(
     file: FileObject,
     dest: string,
     inValid: string | false,
-    callback: (info: UploadResult) => void,
+    callback: (info: UploadResult) => void
   ): void {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
     const source = file.path;
     const info: UploadResult = {
       originalName: file.name,
-      name: file.safeName || file.name,
+      name: self.sanitizeFileName(file.safeName || file.name),
       size: file.size,
       type: file.type,
       destinationDir: dest,
@@ -403,153 +514,191 @@ export class Uploader {
     self.logging(' moveFile() - Start moving.');
 
     info.url = self.settings.uploadUrl + info.name;
+    const finish = (() => {
+      let completed = false;
+      return (result: UploadResult): void => {
+        if (completed) return;
+        completed = true;
+        callback(result);
+      };
+    })();
 
     if (inValid === false) {
       if (!source) {
         info.success = false;
         info.error = 'File path is required';
-        callback(info);
+        finish(info);
         return;
       }
-      try {
-        const is = fs.createReadStream(source);
-        is.on('error', function (err: Error) {
-          self.logging(' moveFile() - Could not open readstream.');
-          info.success = false;
-          info.error = 'Sorry, could not open readstream.';
-          callback(info);
+
+      let failed = false;
+      const fail = (message: string, targetPath?: string, err?: Error): void => {
+        failed = true;
+        if (err) {
+          self.logging(' moveFile() - ' + message, err);
+        }
+        if (targetPath) {
+          self.safeUnlink(targetPath);
+        }
+        info.success = false;
+        info.error = message;
+        finish(info);
+      };
+
+      const startMove = (attempt = 0): void => {
+        let targetPath: string;
+        try {
+          targetPath = self.destinationPath(dest, info.name);
+        } catch {
+          fail('Invalid destination path');
+          return;
+        }
+
+        const os = fs.createWriteStream(targetPath, { flags: 'wx' });
+        let outputStarted = false;
+
+        os.on('error', function (err: NodeJS.ErrnoException) {
+          if (!outputStarted && err.code === 'EEXIST' && attempt < 10) {
+            try {
+              const existingFiles = fs.readdirSync(dest);
+              self.safeName(existingFiles, info.name, function (nextName: string) {
+                info.name = nextName;
+                info.url = self.settings.uploadUrl + info.name;
+                startMove(attempt + 1);
+              });
+            } catch (readErr) {
+              fail('Error accessing upload directory', targetPath, readErr as Error);
+            }
+            return;
+          }
+          fail('Sorry, could not open writestream.', targetPath, err);
         });
 
-        is.on('open', function () {
-          const os = fs.createWriteStream(dest + info.name);
-          os.on('error', function (err: Error) {
-            self.logging(' moveFile() - Could not open writestream.', err);
-            info.success = false;
-            info.error = 'Sorry, could not open writestream.';
-            callback(info);
+        os.on('open', function () {
+          outputStarted = true;
+          const is = fs.createReadStream(source);
+          is.on('error', function (err: Error) {
+            os.destroy();
+            fail('Sorry, could not open readstream.', targetPath, err);
           });
 
-          os.on('open', function () {
-            if (self.settings.imageTypes.test(info.originalName)) {
-              if (self.settings.resize && self.settings.imageTypes.test(info.originalName)) {
-                self.logging(' Resize image: ', self.settings.newSize);
-                const gM = (gm as any)(is, info.originalName);
-                if (Object.prototype.toString.call(self.settings.newSize) === '[object Array]') {
-                  const size = self.settings.newSize as [number, number];
-                  if (size[1]) {
-                    (gM as any).resize(size[0], size[1]);
-                  } else {
-                    (gM as any).resize(size[0]);
-                  }
+          os.on('close', function () {
+            if (failed) return;
+            info.success = true;
+            info.error = undefined;
+            self.logging(' moveFile() - End moving.');
+            self.safeUnlink(source);
+            finish(info);
+          });
+
+          const failImage = (err?: Error | null): void => {
+            os.destroy();
+            fail('Image processing failed.', targetPath, err ?? undefined);
+          };
+
+          if (self.settings.imageTypes.test(info.originalName)) {
+            if (self.settings.resize) {
+              self.logging(' Resize image: ', self.settings.newSize);
+              const gM = gm(is, info.originalName);
+              if (Array.isArray(self.settings.newSize)) {
+                const size = self.settings.newSize;
+                if (size[1]) {
+                  gM.resize(size[0], size[1]);
                 } else {
-                  (gM as any).resize(self.settings.newSize[0]);
+                  gM.resize(size[0]);
                 }
-                (gM as any).quality(self.settings.quality).stream().pipe(os);
-              } else if (
-                self.settings.crop &&
-                self.settings.coordinates &&
-                self.settings.imageTypes.test(info.originalName)
-              ) {
-                self.logging(' Crop image: ', self.settings.coordinates);
-                const cO = self.settings.coordinates;
-                const gM = (gm as any)(is, info.originalName);
-                (gM as any)
-                  .crop(cO.width, cO.height, cO.x, cO.y)
-                  .quality(self.settings.quality)
-                  .stream()
-                  .pipe(os);
               } else {
-                is.pipe(os);
+                gM.resize(self.settings.newSize[0]);
               }
+              gM.quality(self.settings.quality).stream(function (err, stdout) {
+                if (err || !stdout) {
+                  failImage(err);
+                  return;
+                }
+                stdout.on('error', failImage);
+                stdout.pipe(os);
+              });
+            } else if (self.settings.crop && self.settings.coordinates) {
+              self.logging(' Crop image: ', self.settings.coordinates);
+              const cO = self.settings.coordinates;
+              gm(is, info.originalName)
+                .crop(cO.width, cO.height, cO.x, cO.y)
+                .quality(self.settings.quality)
+                .stream(function (err, stdout) {
+                  if (err || !stdout) {
+                    failImage(err);
+                    return;
+                  }
+                  stdout.on('error', failImage);
+                  stdout.pipe(os);
+                });
             } else {
               is.pipe(os);
             }
-            os.on('close', function () {
-              info.success = true;
-              info.error = undefined;
-              self.logging(' moveFile() - End moving.');
-              process.nextTick(function () {
-                fs.unlinkSync(source);
-                callback(info);
-              });
-            });
-          });
+          } else {
+            is.pipe(os);
+          }
         });
+      };
+
+      try {
+        startMove();
       } catch (err) {
         self.logging(err);
         info.success = false;
         info.error = 'moveFile() - Exception.';
-        callback(info);
+        finish(info);
       }
     } else {
-      if (source) {
-        fs.unlinkSync(source);
-      }
+      self.safeUnlink(source);
       info.success = false;
       info.error = inValid as string; // inValid is the error message when it's not false
-      callback(info);
+      finish(info);
     }
   }
 
   safeCreateDirectory(dir: string): void {
-    const self = this;
-    let fullPath = /^win/i.test(process.platform) ? '' : '/';
-    const parts = path.normalize(dir).split(self.settings.osSep);
-
-    parts.forEach(function (part: string) {
-      if (part !== '') {
-        fullPath = path.normalize(path.join(fullPath, part));
-        if (/\.$/.test(fullPath)) {
-          fullPath = fullPath.replace(/\.$/, self.settings.osSep);
-        }
-        if (part !== '' && !self._existsSync(fullPath)) {
-          try {
-            fs.mkdirSync(fullPath, { mode: 0o755 });
-            self.logging(' Create target directory: ' + fullPath);
-          } catch (err) {
-            // Directory may already exist or there's a permission issue
-          }
-        }
-      }
-    });
+    try {
+      fs.mkdirSync(dir, { recursive: true, mode: 0o755 });
+      this.logging(' Create target directory: ' + dir);
+    } catch (err) {
+      this.logging(' safeCreateDirectory() - could not create directory.', err);
+    }
   }
 
   safeName(files: string[], name: string, cb: SafeNameCallback): void {
-    const self = this;
-    const total = files.length;
+    name = this.sanitizeFileName(name) || 'file';
+    const usedNames = new Set(files.map((file) => file.toLowerCase()));
 
-    // Prevent directory traversal and creating hidden system files:
-    name = path.basename(name).replace(/^\.+/, '');
-
-    // Prevent overwriting existing files:
-    for (const f in files) {
-      while (new RegExp(name + '$', 'i').test(files[f])) {
-        name = name.toString().replace(self.settings.nameCountRegexp, self.settings.nameCountFunc);
-      }
+    while (usedNames.has(name.toLowerCase())) {
+      name = name.replace(this.settings.nameCountRegexp, this.settings.nameCountFunc);
     }
 
-    self.logging('  final: ' + name);
+    this.logging('  final: ' + name);
     cb(name);
   }
 
   validate(file: FileObject): string | false {
-    const self = this;
-    let error: string | false = false;
-
-    if (self.settings.minFileSize && self.settings.minFileSize > file.size) {
-      error = 'File is too small';
-    } else if (self.settings.maxFileSize && self.settings.maxFileSize < file.size) {
-      error = 'File is too big';
-    } else if (!self.settings.acceptFileTypes.test(file.name)) {
-      error = 'Filetype not allowed';
+    if (this.settings.minFileSize && this.settings.minFileSize > file.size) {
+      return 'File is too small';
     }
-
-    return error;
+    if (this.settings.maxFileSize && this.settings.maxFileSize < file.size) {
+      return 'File is too big';
+    }
+    if (!this.settings.acceptFileTypes.test(file.name)) {
+      return 'Filetype not allowed';
+    }
+    return false;
   }
 
   createThumbnail(info: UploadResult, cb: (info: UploadResult) => void): void {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
-    if (self.settings.thumbnails && self.settings.imageTypes.test(info.originalName)) {
+    if (
+      info.success &&
+      self.settings.thumbnails &&
+      self.settings.imageTypes.test(info.originalName)
+    ) {
       self.logging('Create Thumbnails!');
       const thumbSizes = self.settings.thumbSizes || [];
       let totalSizes = thumbSizes.length;
@@ -560,23 +709,24 @@ export class Uploader {
           let thumbSubDir = self.settings.uploadDir;
           let thumbSubUrl = self.settings.uploadUrl;
           let thumbName = '';
-          const imgData: { width: number; height?: number } = {} as any;
+          let width: number;
+          let height: number | undefined;
 
-          if (Object.prototype.toString.call(thumbSize) === '[object Array]') {
-            const size = thumbSize as [number, number];
-            imgData.width = size[0];
-            if (!size[1]) {
-              size[1] = size[0];
+          if (Array.isArray(thumbSize)) {
+            width = thumbSize[0];
+            height = thumbSize[1] || thumbSize[0];
+            const sizesStr = width + 'x' + height;
+            if (self.settings.thumbToSubDir) {
+              thumbSubDir = path.join(thumbSubDir, sizesStr);
+              thumbSubUrl += sizesStr + '/';
             }
-            imgData.height = size[1];
-            const sizesStr = size.join('x');
-            thumbSubDir += self.settings.thumbToSubDir ? sizesStr : '';
-            thumbSubUrl += self.settings.thumbToSubDir ? sizesStr + '/' : '';
             thumbName += 'thumb_' + sizesStr + '_';
           } else {
-            imgData.width = thumbSize as number;
-            thumbSubDir += self.settings.thumbToSubDir ? thumbSize.toString() : '';
-            thumbSubUrl += self.settings.thumbToSubDir ? thumbSize.toString() + '/' : '';
+            width = thumbSize;
+            if (self.settings.thumbToSubDir) {
+              thumbSubDir = path.join(thumbSubDir, String(thumbSize));
+              thumbSubUrl += thumbSize + '/';
+            }
             thumbName += 'thumb_' + thumbSize + '_';
           }
 
@@ -587,43 +737,41 @@ export class Uploader {
             thumbName += info.name;
           }
 
-          const destinationDir = info.destinationDir.replace(/\/$|\\$/, '');
-          if (imgData.height) {
-            (gm as any)(destinationDir + self.osSep + info.name)
+          const sourcePath = path.join(info.destinationDir, info.name);
+          const targetPath = path.join(thumbSubDir, thumbName);
+          const completeThumbnail = (url: string, key: string): void => {
+            info.thumbnails.push(url);
+            info.thumbnailObj[key] = url;
+            if (--totalSizes === 0) {
+              cb(info);
+            }
+          };
+          if (height !== undefined) {
+            gm(sourcePath)
               .type('Optimize')
-              .thumb(
-                imgData.width,
-                imgData.height,
-                thumbSubDir + self.osSep + thumbName,
-                90,
-                function (err?: Error) {
-                  if (err) {
-                    console.log('optimize: ', err);
-                    // throw err;
-                  }
-                  info.thumbnails.push(thumbSubUrl + thumbName);
-                  const key = util.format('%s_%s', imgData.width, imgData.height);
-                  info.thumbnailObj[key] = thumbSubUrl + thumbName;
+              .thumb(width, height, targetPath, 90, function (err) {
+                if (err) {
+                  self.logging('optimize: ', err);
                   if (--totalSizes === 0) {
                     cb(info);
                   }
-                },
-              );
+                  return;
+                }
+                completeThumbnail(thumbSubUrl + thumbName, util.format('%s_%s', width, height));
+              });
           } else {
-            (gm as any)(destinationDir + self.osSep + info.name)
-              .resize(imgData.width)
+            gm(sourcePath)
+              .resize(width)
               .quality(self.settings.quality)
-              .write(thumbSubDir + self.osSep + thumbName, function (err?: Error) {
+              .write(targetPath, function (err) {
                 if (err) {
-                  console.log('resize: ', err);
-                  // throw err;
+                  self.logging('resize: ', err);
+                  if (--totalSizes === 0) {
+                    cb(info);
+                  }
+                  return;
                 }
-                info.thumbnails.push(thumbSubUrl + thumbName);
-                const key = util.format('%s', imgData.width);
-                info.thumbnailObj[key] = thumbSubUrl + thumbName;
-                if (--totalSizes === 0) {
-                  cb(info);
-                }
+                completeThumbnail(thumbSubUrl + thumbName, util.format('%s', width));
               });
           }
         });
@@ -635,23 +783,22 @@ export class Uploader {
     }
   }
 
-  logging(...args: any[]): void {
+  logging(...args: unknown[]): void {
     if (this.settings.debug) {
-      for (const arg in arguments) {
-        console.log(util.inspect(arguments[arg], { colors: true, depth: null }));
+      for (const arg of args) {
+        console.log(util.inspect(arg, { colors: true, depth: null }));
       }
     }
   }
 
   uploadInfo(finfo: UploadResult): void {
-    const self = this;
-    self.logging('  File: ' + finfo.originalName);
-    self.logging('  Upload: ' + (finfo.success ? 'Completed' : 'Failed'));
+    this.logging('  File: ' + finfo.originalName);
+    this.logging('  Upload: ' + (finfo.success ? 'Completed' : 'Failed'));
     if (finfo.success) {
-      self.logging('  Destination Directory: ' + finfo.destinationDir);
-      self.logging('  Destination name: ' + finfo.name);
+      this.logging('  Destination Directory: ' + finfo.destinationDir);
+      this.logging('  Destination name: ' + finfo.name);
     } else {
-      self.logging('  Error: ' + finfo.error);
+      this.logging('  Error: ' + finfo.error);
     }
   }
 }

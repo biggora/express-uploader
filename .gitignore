@@ -1,7 +1,11 @@
 .idea
 node_modules
+*.tgz
 examples/tmp/
 examples/public/
 specs/
 
 QWEN.md
+/CLAUDE.md
+/AGENTS.md
+/dist/

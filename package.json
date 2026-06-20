@@ -1,19 +1,49 @@
 {
   "name": "express-uploader",
-  "description": "File uploads with NodeJS",
-  "version": "0.1.4",
+  "description": "Express / Connect file-upload middleware with optional GraphicsMagick resize, crop and thumbnail generation. Ships TypeScript declarations.",
+  "version": "1.1.0",
   "main": "./dist/index.js",
-  "types": "./index.d.ts",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./nest": {
+      "types": "./dist/lib/adapters/nest.d.ts",
+      "import": "./dist/lib/adapters/nest.js",
+      "require": "./dist/lib/adapters/nest.js",
+      "default": "./dist/lib/adapters/nest.js"
+    },
+    "./next": {
+      "types": "./dist/lib/adapters/next.d.ts",
+      "import": "./dist/lib/adapters/next.js",
+      "require": "./dist/lib/adapters/next.js",
+      "default": "./dist/lib/adapters/next.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist/index.js",
+    "dist/index.js.map",
+    "dist/index.d.ts",
+    "dist/index.d.ts.map",
+    "dist/lib/**/*",
+    "dist/lib/adapters/**/*",
+    "README.md"
+  ],
   "scripts": {
     "test": "vitest run",
-    "test:legacy": "npm run build && node dist/tests/test.js",
-    "test:comprehensive": "npm run build && node dist/tests/comprehensive-test.js",
     "build": "tsc",
     "dev": "tsc --watch",
+    "example": "npm run build && node dist/examples/server.js",
     "format": "prettier --write \"**/*.{ts,tsx,js,cjs,mjs,json,md}\"",
     "lint": "eslint \"{lib,tests,examples}/**/*.{ts,tsx}\"",
     "lint:fix": "npm run lint -- --fix",
     "typecheck": "tsc --noEmit",
+    "prepare": "npm run build",
     "prepublishOnly": "npm run build"
   },
   "directories": {
@@ -24,7 +54,7 @@
   "homepage": "https://github.com/biggora/express-uploader/",
   "repository": {
     "type": "git",
-    "url": "git://github.com/biggora/express-uploader.git"
+    "url": "git+https://github.com/biggora/express-uploader.git"
   },
   "author": "Aleksej Gordejev <aleksej@gordejev.lv> (https://github.com/biggora/)",
   "keywords": [
@@ -34,7 +64,12 @@
     "uploader",
     "express",
     "middleware",
-    "connect"
+    "connect",
+    "multer",
+    "file-upload",
+    "typescript",
+    "graphicsmagick",
+    "thumbnails"
   ],
   "license": "MIT",
   "engines": {
@@ -42,10 +77,55 @@
   },
   "dependencies": {
     "gm": "^1.25.1",
-    "tslib": "^2.8.1",
-    "uuid": "^13.0.1"
+    "tslib": "^2.8.1"
+  },
+  "overrides": {
+    "postcss": "^8.5.10",
+    "@nestjs/platform-express": {
+      "multer": "^2.2.0"
+    }
+  },
+  "peerDependencies": {
+    "@nestjs/common": "^9.0.0 || ^10.0.0 || ^11.0.0",
+    "@nestjs/core": "^9.0.0 || ^10.0.0 || ^11.0.0",
+    "@nestjs/platform-express": "^9.0.0 || ^10.0.0 || ^11.0.0",
+    "reflect-metadata": "^0.1.13 || ^0.2.0",
+    "express": "^4.17.0 || ^5.0.0",
+    "next": "^12.0.0 || ^13.0.0 || ^14.0.0 || ^15.0.0 || ^16.0.0",
+    "multer": "^1.4.5 || ^2.0.0",
+    "@types/multer": "^1.4.0"
+  },
+  "peerDependenciesMeta": {
+    "@nestjs/common": {
+      "optional": true
+    },
+    "@nestjs/core": {
+      "optional": true
+    },
+    "@nestjs/platform-express": {
+      "optional": true
+    },
+    "reflect-metadata": {
+      "optional": true
+    },
+    "express": {
+      "optional": true
+    },
+    "next": {
+      "optional": true
+    },
+    "multer": {
+      "optional": true
+    },
+    "@types/multer": {
+      "optional": true
+    }
   },
   "devDependencies": {
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/core": "^11.0.0",
+    "@nestjs/platform-express": "^11.0.0",
+    "@nestjs/testing": "^11.0.0",
     "@types/body-parser": "^1.19.6",
     "@types/cookie-parser": "^1.4.3",
     "@types/express": "^4.17.17",
@@ -53,31 +133,26 @@
     "@types/method-override": "^0.0.32",
     "@types/morgan": "^1.9.4",
     "@types/multer": "^1.4.12",
-    "@types/node": "^18.15.11",
-    "@types/uuid": "^9.0.1",
-    "body-parser": "^1.17.2",
+    "@types/node": "^22.19.19",
+    "@types/supertest": "^6.0.2",
+    "body-parser": "2.2.1",
     "compression": "^1.7.0",
     "cookie-parser": "^1.4.3",
     "errorhandler": "^1.5.0",
     "eslint": "^9.38.0",
     "express": "^5.1.0",
     "express-session": "^1.15.4",
+    "form-data": "^4.0.0",
     "method-override": "^3.0.0",
     "morgan": "^1.10.1",
     "multer": "^2.2.0",
+    "next": "^16.2.6",
     "prettier": "^3.6.2",
-    "typescript": "^4.9.5",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1",
+    "supertest": "^7.0.0",
+    "typescript": "^5.9.3",
     "typescript-eslint": "^8.46.2",
-    "vitest": "^3.2.6"
-  },
-  "overrides": {
-    "flatted": "^3.4.1",
-    "qs": "^6.15.2",
-    "minimatch": "^9.0.7",
-    "path-to-regexp": "^8.4.0",
-    "picomatch": "^2.3.2",
-    "@nestjs/platform-express": {
-      "multer": "^2.2.0"
-    }
+    "vitest": "^4.1.6"
   }
 }
