@@ -85,7 +85,7 @@
       "multer": "^2.2.0"
     },
     "js-yaml": "^4.3.0",
-    "sharp": "^0.35.3"
+    "sharp": "^0.35.4"
   },
   "peerDependencies": {
     "@nestjs/common": "^9.0.0 || ^10.0.0 || ^11.0.0",
@@ -155,6 +155,6 @@
     "supertest": "^7.0.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.46.2",
-    "vitest": "^4.1.10"
+    "vitest": "^5.0.1"
   }
 }
