@@ -1,4 +1,9 @@
 # Changelog
+## 1.1.5 - 2026-09-26
+
+- Remediated transitive security findings through updated `qs`, `js-yaml`, and `sharp` overrides.
+- Refreshed Vitest tooling and package-lock metadata.
+
 ## 1.1.2 - 2026-07-20
 
 - Bumped development dependency `morgan` and refreshed package lockfile.
